@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Staff inventory | Mololine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="admin.css" />
+    <script src="inventory-config.js"></script>
+  </head>
+  <body class="admin-page">
+    <header class="admin-header">
+      <a href="index.html" aria-label="Mololine home">
+        <img src="mololine-logo.webp" alt="Mololine Services" width="150" />
+      </a>
+      <h1>Live seat inventory</h1>
+    </header>
+    <main class="admin-main">
+      <section class="admin-card">
+        <h2>Manage departures and booking requests</h2>
+        <p>Inventory is managed in the private Mololine Google Sheet. Add actual departures in the Departures tab. Review incoming requests and use the sheet menu to confirm and reserve seats or reject requests.</p>
+        <a class="admin-link" id="open-inventory-sheet" href="#" target="_blank" rel="noopener noreferrer" hidden>Open the Mololine inventory sheet</a>
+        <p id="admin-status" class="admin-status" role="status">The inventory sheet is not configured yet.</p>
+      </section>
+      <section class="admin-card">
+        <h2>Booking and seat safety</h2>
+        <ul>
+          <li>Customers see departures that have been added and are still active.</li>
+          <li>Pending seat requests are temporarily hidden from other customers.</li>
+          <li>Confirming a request reserves its seats. Rejecting it makes them available again.</li>
+          <li>Share the spreadsheet only with staff who are permitted to see customer contact details.</li>
+        </ul>
+      </section>
+      <p class="admin-back"><a href="index.html">← Back to the booking page</a></p>
+    </main>
+  </body>
+</html>
