@@ -15,8 +15,8 @@
       href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
-    <script type="module" src="app.js?v=3"></script>
+    <link rel="stylesheet" href="styles.css?v=6" />
+    <script type="module" src="app.js?v=6"></script>
   </head>
   <body>
     <div class="contact-strip">
@@ -84,86 +84,119 @@
           <div class="booking-heading">
             <div>
               <p class="booking-eyebrow">MOLOLINE COUNTRYWIDE</p>
-              <h2 id="booking-heading">Plan your journey</h2>
+              <h2 id="booking-heading">Plan your trip</h2>
             </div>
             <p class="availability-note"><span aria-hidden="true"></span> Choose your seats · confirm by WhatsApp</p>
           </div>
 
-          <p class="booking-extra-note booking-intro-note">Choose a route, travel time, vehicle, and seat preferences. Our team will confirm availability on WhatsApp.</p>
-
           <form id="booking-form">
-            <div class="booking-fields">
-              <label>
-                <span>From</span>
-                <select name="origin" id="origin" required>
-                  <option value="">Choose departure town</option>
-                </select>
-              </label>
-              <button class="route-swap" id="swap-route" type="button" aria-label="Swap departure and destination">↔</button>
-              <label>
-                <span>To</span>
-                <select name="destination" id="destination" required>
-                  <option value="">Choose destination town</option>
-                </select>
-              </label>
-              <label>
-                <span>Travel date</span>
-                <input name="date" id="travel-date" type="date" required />
-              </label>
-              <label>
-                <span>Preferred departure time · 24/7</span>
-                <select name="time" id="departure-time" required>
-                  <option value="">Choose preferred time</option>
-                </select>
-              </label>
-              <label>
-                <span>Your name</span>
-                <input name="name" type="text" autocomplete="name" placeholder="Passenger name" required />
-              </label>
-              <label>
-                <span>Your phone</span>
-                <input name="phone" type="tel" autocomplete="tel" placeholder="0712 345 678" required />
-              </label>
-            </div>
-
-            <section class="booking-extra" aria-labelledby="stops-heading" aria-live="polite">
-              <h3 id="stops-heading">Suggested route stops and leg fares</h3>
-              <p class="booking-extra-note">Indicative stop points are estimated from county-town locations. Confirm the actual route and stops on WhatsApp.</p>
-              <ol class="route-stops" id="route-stops">
-                <li>Choose a route to see suggested stops and leg fares.</li>
-              </ol>
-            </section>
-
-            <section class="booking-extra seat-request-section" aria-labelledby="seats-heading">
-              <h3 id="seats-heading">Choose your seat</h3>
-              <p class="booking-extra-note">Choose a vehicle layout, then tap up to six seats. Seat choices are requests, not live availability; our team will confirm them on WhatsApp.</p>
-              <div class="vehicle-options" id="vehicle-options" role="group" aria-label="Choose a vehicle"></div>
-              <div class="seat-map">
-                <div class="seat-map-header">
-                  <span class="vehicle-front">Front of vehicle</span>
-                  <div class="seat-legend" aria-label="Seat legend">
-                    <span><i class="seat-legend-free"></i> Free to select</span>
-                    <span><i class="seat-legend-selected"></i> Selected</span>
+            <div class="booking-layout">
+              <div class="booking-steps">
+                <section class="booking-step" aria-labelledby="destination-heading">
+                  <div class="booking-step-heading">
+                    <span class="step-number" aria-hidden="true">1</span>
+                    <h3 id="destination-heading">Destination</h3>
                   </div>
+                  <div class="booking-fields route-fields">
+                    <label>
+                      <span>From</span>
+                      <select name="origin" id="origin" required>
+                        <option value="">Choose departure town</option>
+                      </select>
+                    </label>
+                    <button class="route-swap" id="swap-route" type="button" aria-label="Swap departure and destination">↔ Swap route</button>
+                    <input name="destination" id="destination" type="hidden" />
+                  </div>
+                  <div class="destination-picker">
+                    <label class="destination-search-label" for="destination-search">To · choose from all 47 counties</label>
+                    <input id="destination-search" class="destination-search" type="search" placeholder="Search destinations or counties" autocomplete="off" />
+                    <div class="destination-options" id="destination-options" role="group" aria-label="Choose a destination"></div>
+                    <p class="destination-status" id="destination-status" role="status" aria-live="polite">Choose a destination to continue.</p>
+                  </div>
+                  <div class="route-stops-panel" aria-labelledby="stops-heading" aria-live="polite">
+                    <h4 id="stops-heading">Suggested stops and leg fares</h4>
+                    <p class="booking-extra-note">Indicative route stops and fares; confirm the actual route and price on WhatsApp.</p>
+                    <ol class="route-stops" id="route-stops">
+                      <li>Choose a route to see suggested stops.</li>
+                    </ol>
+                  </div>
+                </section>
+
+                <section class="booking-step" aria-labelledby="when-heading">
+                  <div class="booking-step-heading">
+                    <span class="step-number" aria-hidden="true">2</span>
+                    <h3 id="when-heading">When</h3>
+                  </div>
+                  <div class="booking-fields when-fields">
+                    <label>
+                      <span>Travel date</span>
+                      <input name="date" id="travel-date" type="date" required />
+                    </label>
+                    <label>
+                      <span>Preferred departure time · 24/7</span>
+                      <select name="time" id="departure-time" required>
+                        <option value="">Choose preferred time</option>
+                      </select>
+                    </label>
+                  </div>
+                </section>
+
+                <section class="booking-step" aria-labelledby="seats-heading">
+                  <div class="booking-step-heading">
+                    <span class="step-number" aria-hidden="true">3</span>
+                    <h3 id="seats-heading">Choose your seat</h3>
+                  </div>
+                  <p class="booking-extra-note">Choose a vehicle layout, then tap up to six seats. Seat choices are requests, not live availability; our team will confirm them on WhatsApp.</p>
+                  <div class="vehicle-options" id="vehicle-options" role="group" aria-label="Choose a vehicle"></div>
+                  <div class="seat-map">
+                    <div class="seat-map-header">
+                      <span class="vehicle-front">Front of vehicle</span>
+                      <div class="seat-legend" aria-label="Seat legend">
+                        <span><i class="seat-legend-free"></i> Free to select</span>
+                        <span><i class="seat-legend-selected"></i> Selected</span>
+                      </div>
+                    </div>
+                    <div class="seat-grid" id="seat-map" role="group" aria-label="Select seats"></div>
+                    <p class="seat-selection-status" id="seat-selection-status" role="status">No seats selected</p>
+                  </div>
+                </section>
+
+                <section class="booking-step" aria-labelledby="details-heading">
+                  <div class="booking-step-heading">
+                    <span class="step-number" aria-hidden="true">4</span>
+                    <h3 id="details-heading">Your details</h3>
+                  </div>
+                  <div class="booking-fields details-fields">
+                    <label>
+                      <span>Full name</span>
+                      <input name="name" type="text" autocomplete="name" placeholder="Passenger name" required />
+                    </label>
+                    <label>
+                      <span>Phone number</span>
+                      <input name="phone" type="tel" autocomplete="tel" placeholder="0712 345 678" required />
+                    </label>
+                  </div>
+                </section>
+
+                <div class="booking-actions">
+                  <button class="booking-submit" type="submit">
+                    <span>Request booking on WhatsApp</span><span aria-hidden="true">↗</span>
+                  </button>
+                  <p class="booking-disclaimer">No online payment. Seat availability and final fares are confirmed after our team replies on WhatsApp.</p>
                 </div>
-                <div class="seat-grid" id="seat-map" role="group" aria-label="Select seats"></div>
-                <p class="seat-selection-status" id="seat-selection-status" role="status">No seats selected</p>
               </div>
-            </section>
-
-            <div class="booking-summary" aria-live="polite">
-              <div>
-                <span class="fare-label">ESTIMATED ONE-WAY FARE</span>
-                <strong id="fare-estimate">Choose a route</strong>
-                <small>Reduced fare per passenger · indicative only · final fare confirmed on WhatsApp</small>
-              </div>
-              <p><span id="selected-seat-summary">Seats: none selected</span><br />Seat requests are confirmed by our team on WhatsApp. No live availability check or online payment is used.</p>
+              <aside class="booking-summary" aria-live="polite" aria-labelledby="trip-summary-heading">
+                <h3 id="trip-summary-heading">Trip summary</h3>
+                <p class="summary-route" id="summary-route">Choose your destination</p>
+                <dl>
+                  <div><dt>Date</dt><dd id="summary-date">—</dd></div>
+                  <div><dt>Departure</dt><dd id="summary-departure">—</dd></div>
+                  <div><dt>Vehicle</dt><dd id="summary-vehicle">Shuttle (7 seats)</dd></div>
+                  <div><dt>Seats</dt><dd id="summary-seats">— none selected —</dd></div>
+                </dl>
+                <p class="summary-note">Your seat choices are requests only. Mololine will confirm availability and fare on WhatsApp.</p>
+              </aside>
             </div>
-
-            <button class="booking-submit" type="submit">
-              <span>Request booking on WhatsApp</span><span aria-hidden="true">↗</span>
-            </button>
-            <p class="booking-disclaimer">No online payment. Stopovers, seat availability, and final fares are confirmed after our team replies on WhatsApp.</p>
           </form>
         </div>
       </section>

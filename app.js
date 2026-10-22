@@ -13,14 +13,20 @@ const contactForm = document.querySelector("#contact-form");
 const bookingForm = document.querySelector("#booking-form");
 const originSelect = document.querySelector("#origin");
 const destinationSelect = document.querySelector("#destination");
+const destinationSearch = document.querySelector("#destination-search");
+const destinationOptions = document.querySelector("#destination-options");
+const destinationStatus = document.querySelector("#destination-status");
 const dateInput = document.querySelector("#travel-date");
 const timeSelect = document.querySelector("#departure-time");
-const fareEstimate = document.querySelector("#fare-estimate");
 const routeStops = document.querySelector("#route-stops");
 const vehicleOptions = document.querySelector("#vehicle-options");
 const seatMap = document.querySelector("#seat-map");
 const seatSelectionStatus = document.querySelector("#seat-selection-status");
-const selectedSeatSummary = document.querySelector("#selected-seat-summary");
+const summaryRoute = document.querySelector("#summary-route");
+const summaryDate = document.querySelector("#summary-date");
+const summaryDeparture = document.querySelector("#summary-departure");
+const summaryVehicle = document.querySelector("#summary-vehicle");
+const summarySeats = document.querySelector("#summary-seats");
 
 const currency = new Intl.NumberFormat("en-KE", {
   style: "currency",
@@ -174,18 +180,69 @@ function updateRouteStops(fare) {
   });
 }
 
-function updateFareEstimate() {
+function updateTripSummary() {
+  const origin = findLocation(originSelect.value);
+  const destination = findLocation(destinationSelect.value);
+  summaryRoute.textContent = origin && destination
+    ? `${origin[0]} · ${origin[1]} County → ${destination[0]} · ${destination[1]} County`
+    : "Choose your destination";
+  summaryDate.textContent = dateInput.value || "—";
+  summaryDeparture.textContent = timeSelect.value || "—";
+  summaryVehicle.textContent = selectedVehicle.label;
+  summarySeats.textContent = selectedSeats.length ? selectedSeats.join(", ") : "— none selected —";
+}
+
+function updateRouteDetails() {
   const fare = estimateFarePerPassenger(originSelect.value, destinationSelect.value);
   if (originSelect.value && originSelect.value === destinationSelect.value) {
-    fareEstimate.textContent = "Choose a different destination";
     updateRouteStops(null);
-    updateSeatSummary(null);
-    return;
+  } else {
+    updateRouteStops(fare);
   }
+  renderDestinationOptions();
+  updateTripSummary();
+}
 
-  fareEstimate.textContent = fare === null ? "Choose a route" : `${currency.format(fare)} per passenger`;
-  updateRouteStops(fare);
-  updateSeatSummary(fare);
+function renderDestinationOptions() {
+  const query = destinationSearch.value.trim().toLocaleLowerCase();
+  const fragment = document.createDocumentFragment();
+  const matchingLocations = locations.filter(([town, county]) => (
+    `${town} ${county} county`.toLocaleLowerCase().includes(query)
+  ));
+
+  matchingLocations.forEach(([town, county]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "destination-option";
+    button.setAttribute("aria-pressed", String(town === destinationSelect.value));
+    button.disabled = town === originSelect.value;
+
+    const route = document.createElement("span");
+    route.className = "destination-route";
+    route.textContent = town === originSelect.value
+      ? `${town} · current departure`
+      : `${originSelect.value || "Choose departure"} → ${town}`;
+    const region = document.createElement("span");
+    region.className = "destination-county";
+    region.textContent = `${county} County`;
+    button.append(route, region);
+    button.addEventListener("click", () => {
+      destinationSelect.value = town;
+      destinationStatus.textContent = `${town}, ${county} County selected.`;
+      updateRouteDetails();
+    });
+    fragment.append(button);
+  });
+
+  destinationOptions.replaceChildren(fragment);
+  if (!matchingLocations.length) {
+    destinationStatus.textContent = "No destinations match your search.";
+  } else if (destinationSelect.value) {
+    const selectedLocation = findLocation(destinationSelect.value);
+    destinationStatus.textContent = `${selectedLocation[0]}, ${selectedLocation[1]} County selected.`;
+  } else if (!destinationSelect.value) {
+    destinationStatus.textContent = `Showing ${matchingLocations.length} of ${locations.length} county towns. Your departure town is not selectable as a destination.`;
+  }
 }
 
 function renderVehicleOptions() {
@@ -201,7 +258,7 @@ function renderVehicleOptions() {
       selectedSeats = [];
       renderVehicleOptions();
       renderSeatMap();
-      updateSeatSummary(estimateFarePerPassenger(originSelect.value, destinationSelect.value));
+      updateTripSummary();
     });
     vehicleOptions.append(button);
   });
@@ -245,23 +302,13 @@ function toggleSeat(seat, button) {
   }
 
   updateSeatSelectionStatus();
-  updateSeatSummary(estimateFarePerPassenger(originSelect.value, destinationSelect.value));
+  updateTripSummary();
 }
 
 function updateSeatSelectionStatus() {
   seatSelectionStatus.textContent = selectedSeats.length
     ? `${selectedSeats.length} ${selectedSeats.length === 1 ? "seat" : "seats"} selected: ${selectedSeats.join(", ")}`
     : "No seats selected";
-}
-
-function updateSeatSummary(fare) {
-  if (!fare || !selectedSeats.length) {
-    selectedSeatSummary.textContent = selectedSeats.length
-      ? `Seats: ${selectedSeats.join(", ")}`
-      : "Seats: none selected";
-    return;
-  }
-  selectedSeatSummary.textContent = `Seats: ${selectedSeats.join(", ")} · ${currency.format(fare * selectedSeats.length)} estimated total`;
 }
 
 function applyRouteFromQuery() {
@@ -281,14 +328,14 @@ function applyRouteFromQuery() {
 }
 
 addLocationOptions(originSelect);
-addLocationOptions(destinationSelect);
 dateInput.min = localDateValue(new Date());
 dateInput.value = dateInput.min;
 populateDepartureTimes();
 applyRouteFromQuery();
+renderDestinationOptions();
 renderVehicleOptions();
 renderSeatMap();
-updateFareEstimate();
+updateRouteDetails();
 
 menuToggle.addEventListener("click", () => {
   const isExpanded = menuToggle.getAttribute("aria-expanded") === "true";
@@ -314,18 +361,26 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-originSelect.addEventListener("change", updateFareEstimate);
-destinationSelect.addEventListener("change", updateFareEstimate);
+originSelect.addEventListener("change", updateRouteDetails);
+destinationSelect.addEventListener("change", updateRouteDetails);
+destinationSearch.addEventListener("input", renderDestinationOptions);
+dateInput.addEventListener("change", updateTripSummary);
+timeSelect.addEventListener("change", updateTripSummary);
 
 document.querySelector("#swap-route").addEventListener("click", () => {
   const origin = originSelect.value;
   originSelect.value = destinationSelect.value;
   destinationSelect.value = origin;
-  updateFareEstimate();
+  updateRouteDetails();
 });
 
 bookingForm.addEventListener("submit", (event) => {
   event.preventDefault();
+  if (!destinationSelect.value) {
+    destinationStatus.textContent = "Choose a destination from the list before continuing.";
+    destinationSearch.focus();
+    return;
+  }
   if (!bookingForm.reportValidity()) return;
 
   if (originSelect.value === destinationSelect.value) {
@@ -355,7 +410,6 @@ bookingForm.addEventListener("submit", (event) => {
     `Suggested route stops and leg fares: ${legs
       .map((leg) => `${leg.from} to ${leg.to}: ${currency.format(leg.fare)} per passenger`)
       .join("; ")}`,
-    `Estimated fare: ${currency.format(fare)} per passenger (${currency.format(fare * selectedSeats.length)} total; to be confirmed)`,
     `Name: ${booking.get("name").toString().trim()}`,
     `Phone: ${booking.get("phone").toString().trim()}`,
     "These seat choices are requests only, not live availability or reservations. Please confirm the seats, departure and fare on WhatsApp. No online payment has been made.",
