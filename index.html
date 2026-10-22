@@ -45,7 +45,7 @@
         <a class="brand" href="#top" aria-label="Mololine Services home">
           <img src="mololine-logo.webp" alt="MOLOLINE Services" width="180" height="70" />
         </a>
-        <a class="booking-button" href="https://ticket.mololineserviceskitengela.co.ke/public/booking">
+        <a class="booking-button" href="#booking">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <rect x="3" y="5" width="18" height="16" rx="1.5" />
             <path d="M7 3v4M17 3v4M3 10h18M7 13h2m3 0h2m3 0h1M7 17h2m3 0h2" />
@@ -75,6 +75,79 @@
             we’re here to help! Reach out to us today, and experience the exceptional care and
             support that sets us apart.
           </p>
+          <a class="hero-booking-link" href="#booking">Book a ride <span aria-hidden="true">↓</span></a>
+        </div>
+      </section>
+
+      <section class="booking-section" id="booking" aria-labelledby="booking-heading">
+        <div class="booking-wrap">
+          <div class="booking-heading">
+            <div>
+              <p class="booking-eyebrow">MOLOLINE COUNTRYWIDE</p>
+              <h2 id="booking-heading">Plan your journey</h2>
+            </div>
+            <p class="availability-note"><span aria-hidden="true"></span> Departures available 24 hours a day, every day</p>
+          </div>
+
+          <form id="booking-form">
+            <div class="booking-fields">
+              <label>
+                <span>From</span>
+                <select name="origin" id="origin" required>
+                  <option value="">Choose departure town</option>
+                </select>
+              </label>
+              <button class="route-swap" id="swap-route" type="button" aria-label="Swap departure and destination">↔</button>
+              <label>
+                <span>To</span>
+                <select name="destination" id="destination" required>
+                  <option value="">Choose destination town</option>
+                </select>
+              </label>
+              <label>
+                <span>Travel date</span>
+                <input name="date" id="travel-date" type="date" required />
+              </label>
+              <label>
+                <span>Departure time</span>
+                <select name="time" id="departure-time" required></select>
+              </label>
+              <label>
+                <span>Vehicle</span>
+                <select name="vehicle" id="vehicle" required>
+                  <option value="Shuttle (7 seats)">Shuttle · 7 seats</option>
+                  <option value="Minibus (14 seats)">Minibus · 14 seats</option>
+                  <option value="Coach (45 seats)">Coach · 45 seats</option>
+                </select>
+              </label>
+              <label>
+                <span>Passengers</span>
+                <select name="passengers" id="passengers" required></select>
+              </label>
+              <label>
+                <span>Your name</span>
+                <input name="name" type="text" autocomplete="name" placeholder="Passenger name" required />
+              </label>
+              <label>
+                <span>Your phone</span>
+                <input name="phone" type="tel" autocomplete="tel" placeholder="0712 345 678" required />
+              </label>
+            </div>
+
+            <div class="booking-summary" aria-live="polite">
+              <div>
+                <span class="fare-label">ESTIMATED ONE-WAY FARE</span>
+                <strong id="fare-estimate">Choose a route</strong>
+                <small>Indicative fare per passenger · final fare confirmed on WhatsApp</small>
+              </div>
+              <p>Several vehicles can be requested for every hourly departure, 24/7. We’ll reconfirm the available vehicle and seats with you on WhatsApp.</p>
+            </div>
+
+            <button class="booking-submit" type="submit">
+              <span>Request booking on WhatsApp</span><span aria-hidden="true">↗</span>
+            </button>
+            <p class="booking-disclaimer">No online payment. Your request is confirmed after our team replies on WhatsApp.</p>
+          </form>
         </div>
       </section>
 
@@ -113,7 +186,7 @@
             </span>
             <div>
               <h2>Business Hours</h2>
-              <p>Monday to Sunday: 8:00am – 5:00pm</p>
+              <p>Open 24 hours · every day</p>
             </div>
           </article>
         </div>
@@ -172,7 +245,7 @@
         </div>
         <div class="footer-hours">
           <h2>Business Hours</h2>
-          <p>Monday to Sunday: 8:00am – 5:00pm</p>
+          <p>Open 24 hours · every day</p>
         </div>
       </div>
       <div class="footer-bottom">
