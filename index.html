@@ -16,8 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
-    <script src="inventory-config.js?v=2"></script>
-    <script type="module" src="app.js?v=2"></script>
+    <script type="module" src="app.js?v=3"></script>
   </head>
   <body>
     <div class="contact-strip">
@@ -87,11 +86,10 @@
               <p class="booking-eyebrow">MOLOLINE COUNTRYWIDE</p>
               <h2 id="booking-heading">Plan your journey</h2>
             </div>
-            <p class="availability-note"><span aria-hidden="true"></span> Live departure and seat availability</p>
+            <p class="availability-note"><span aria-hidden="true"></span> Choose your seats · confirm by WhatsApp</p>
           </div>
 
-          <p class="inventory-status" id="inventory-status" role="status">Choose a route and date to check live departures.</p>
-          <p class="inventory-fallback">Need help with availability? <a href="https://wa.me/254733443226?text=Hello%20Mololine%2C%20please%20help%20me%20check%20live%20seat%20availability." target="_blank" rel="noopener noreferrer">Ask on WhatsApp</a>.</p>
+          <p class="booking-extra-note booking-intro-note">Choose a route, travel time, vehicle, and seat preferences. Our team will confirm availability on WhatsApp.</p>
 
           <form id="booking-form">
             <div class="booking-fields">
@@ -113,20 +111,10 @@
                 <input name="date" id="travel-date" type="date" required />
               </label>
               <label>
-                <span>Departure time</span>
+                <span>Preferred departure time · 24/7</span>
                 <select name="time" id="departure-time" required>
-                  <option value="">Choose a departure time</option>
+                  <option value="">Choose preferred time</option>
                 </select>
-              </label>
-              <label>
-                <span>Vehicle</span>
-                <select name="vehicle" id="vehicle" required>
-                  <option value="">Choose a departure first</option>
-                </select>
-              </label>
-              <label>
-                <span>Passengers</span>
-                <select name="passengers" id="passengers" required></select>
               </label>
               <label>
                 <span>Your name</span>
@@ -147,18 +135,29 @@
             </section>
 
             <section class="booking-extra seat-request-section" aria-labelledby="seats-heading">
-              <h3 id="seats-heading">Request seat number(s)</h3>
-              <p class="booking-extra-note">Choose one numbered seat for each passenger, up to six passengers per request. Seat requests are subject to availability and will be confirmed on WhatsApp.</p>
-              <div class="seat-fields" id="seat-requests"></div>
+              <h3 id="seats-heading">Choose your seat</h3>
+              <p class="booking-extra-note">Choose a vehicle layout, then tap up to six seats. Seat choices are requests, not live availability; our team will confirm them on WhatsApp.</p>
+              <div class="vehicle-options" id="vehicle-options" role="group" aria-label="Choose a vehicle"></div>
+              <div class="seat-map">
+                <div class="seat-map-header">
+                  <span class="vehicle-front">Front of vehicle</span>
+                  <div class="seat-legend" aria-label="Seat legend">
+                    <span><i class="seat-legend-free"></i> Free to select</span>
+                    <span><i class="seat-legend-selected"></i> Selected</span>
+                  </div>
+                </div>
+                <div class="seat-grid" id="seat-map" role="group" aria-label="Select seats"></div>
+                <p class="seat-selection-status" id="seat-selection-status" role="status">No seats selected</p>
+              </div>
             </section>
 
             <div class="booking-summary" aria-live="polite">
               <div>
-                <span class="fare-label">ESTIMATED ONE-WAY FARE · KES 200 OFF</span>
+                <span class="fare-label">ESTIMATED ONE-WAY FARE</span>
                 <strong id="fare-estimate">Choose a route</strong>
                 <small>Reduced fare per passenger · indicative only · final fare confirmed on WhatsApp</small>
               </div>
-              <p>Displayed departures and available seat numbers come from live inventory. A seat is reserved only after an operator confirms your WhatsApp request.</p>
+              <p><span id="selected-seat-summary">Seats: none selected</span><br />Seat requests are confirmed by our team on WhatsApp. No live availability check or online payment is used.</p>
             </div>
 
             <button class="booking-submit" type="submit">
@@ -270,7 +269,6 @@
         <span>© <span id="year"></span> Mololine Services. All Rights Reserved.</span>
         <div class="footer-utilities">
           <a href="/privacy-policy">Privacy policy</a>
-          <a href="admin.html">Staff inventory</a>
         </div>
       </div>
     </footer>

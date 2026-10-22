@@ -56,9 +56,7 @@ button, input, textarea { font: inherit; }
 .booking-heading h2 { margin: 0; color: #333; font: 700 29px/1.2 "Figtree", sans-serif; }
 .availability-note { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; color: #4f6253; font-size: 11px; }
 .availability-note span { width: 8px; height: 8px; border-radius: 50%; background: #26874d; box-shadow: 0 0 0 3px #e4f3e8; }
-.inventory-status { margin: -12px 0 18px; color: #666; font-size: 11px; line-height: 1.6; }
-.inventory-fallback { margin: -10px 0 16px; color: #666; font-size: 11px; }
-.inventory-fallback a { color: var(--red); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.booking-intro-note { margin: -12px 0 18px; }
 .booking-fields { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 16px; }
 .booking-fields label { display: flex; min-width: 0; flex-direction: column; gap: 7px; }
 .booking-fields label > span { color: #464646; font-size: 11px; font-weight: 600; }
@@ -70,11 +68,25 @@ button, input, textarea { font: inherit; }
 .booking-extra-note { margin: 0; color: #777; font-size: 10px; line-height: 1.6; }
 .route-stops { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; margin: 13px 0 0; padding-left: 20px; color: #555; font-size: 11px; }
 .route-stops li { padding-left: 3px; line-height: 1.6; }
-.seat-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 13px; }
-.seat-fields label { display: flex; min-width: 0; flex-direction: column; gap: 7px; }
-.seat-fields label > span { color: #464646; font-size: 11px; font-weight: 600; }
-.seat-fields select { width: 100%; min-width: 0; height: 43px; padding: 0 11px; border: 1px solid #d5d5d5; border-radius: 3px; background: #fff; color: #424242; font: 12px "Poppins", sans-serif; }
-.seat-fields select:focus { border-color: var(--red); outline: 0; box-shadow: 0 0 0 3px rgba(187,0,0,.08); }
+.vehicle-options { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+.vehicle-option { min-height: 40px; padding: 0 14px; border: 1px solid #d5d5d5; border-radius: 5px; background: #fff; color: #444; font-size: 11px; font-weight: 600; cursor: pointer; }
+.vehicle-option:hover { border-color: var(--red); color: var(--red); }
+.vehicle-option[aria-pressed="true"] { border-color: var(--red); background: #fff6f6; color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+.seat-map { width: min(100%, 450px); margin: 18px auto 0; padding: 17px; border: 1px solid #e5e5e5; border-radius: 6px; background: #fafafa; }
+.seat-map-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.vehicle-front { padding: 7px 12px; border: 1px solid #ddd; border-radius: 4px; background: #fff; color: #666; font-size: 10px; }
+.seat-legend { display: flex; flex-wrap: wrap; gap: 10px; color: #666; font-size: 9px; }
+.seat-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.seat-legend i { width: 12px; height: 12px; border: 1px solid #ccc; border-radius: 3px; background: #fff; }
+.seat-legend .seat-legend-selected { border-color: var(--red); background: var(--red); }
+.seat-grid { display: grid; justify-content: center; gap: 9px; }
+.seat-grid-shuttle { grid-template-columns: repeat(3, minmax(50px, 72px)); }
+.seat-grid-minibus, .seat-grid-coach { grid-template-columns: repeat(4, minmax(46px, 68px)); }
+.seat-button { min-height: 40px; border: 1px solid #d1d1d1; border-radius: 5px 5px 9px 9px; background: #fff; color: #414141; font-size: 11px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+.seat-button:hover { border-color: var(--red); color: var(--red); }
+.seat-button.is-selected { border-color: var(--red); background: var(--red); color: #fff; }
+.seat-button:focus-visible, .vehicle-option:focus-visible { outline: 3px solid rgba(187,0,0,.25); outline-offset: 2px; }
+.seat-selection-status { margin: 13px 0 0; color: #555; font-size: 10px; text-align: center; }
 .route-swap { position: absolute; z-index: 1; top: 32px; left: calc(33.333% - 18px); width: 29px; height: 29px; border: 1px solid #d7d7d7; border-radius: 50%; background: #fff; color: var(--red); cursor: pointer; font-size: 17px; }
 .booking-summary { display: flex; justify-content: space-between; align-items: center; gap: 22px; margin-top: 24px; padding: 17px 18px; border: 1px solid #e9e9e9; border-left: 3px solid var(--red); background: #fafafa; }
 .booking-summary > div { display: flex; flex-direction: column; gap: 4px; }
@@ -173,7 +185,10 @@ button, input, textarea { font: inherit; }
   .availability-note { margin-top: 12px; font-size: 10px; }
   .booking-fields { grid-template-columns: 1fr; gap: 13px; }
   .route-stops { grid-template-columns: 1fr; }
-  .seat-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .seat-map { padding: 13px 9px; }
+  .seat-map-header { align-items: flex-start; flex-direction: column; }
+  .seat-grid-shuttle { grid-template-columns: repeat(3, minmax(48px, 68px)); }
+  .seat-grid-minibus, .seat-grid-coach { grid-template-columns: repeat(4, minmax(42px, 60px)); }
   .route-swap { top: 81px; right: 9px; left: auto; }
   .booking-fields label > span { font-size: 11px; }
   .booking-summary { align-items: flex-start; flex-direction: column; gap: 11px; margin-top: 18px; padding: 14px; }

@@ -2,7 +2,11 @@ import { locations } from "./locations.js";
 
 const whatsappNumber = "254733443226";
 const maxPassengersPerRequest = 6;
-const inventoryUrl = window.MOLOLINE_INVENTORY_URL;
+const vehicleLayouts = [
+  { id: "shuttle", label: "Shuttle (7 seats)", capacity: 7, seatsPerRow: [3, 3, 1] },
+  { id: "minibus", label: "Minibus (14 seats)", capacity: 14, seatsPerRow: [4, 4, 4, 2] },
+  { id: "coach", label: "Coach (45 seats)", capacity: 45, seatsPerRow: [...Array(11).fill(4), 1] },
+];
 const menuToggle = document.querySelector(".menu-toggle");
 const siteNav = document.querySelector(".site-nav");
 const contactForm = document.querySelector("#contact-form");
@@ -11,21 +15,20 @@ const originSelect = document.querySelector("#origin");
 const destinationSelect = document.querySelector("#destination");
 const dateInput = document.querySelector("#travel-date");
 const timeSelect = document.querySelector("#departure-time");
-const vehicleSelect = document.querySelector("#vehicle");
-const passengerSelect = document.querySelector("#passengers");
 const fareEstimate = document.querySelector("#fare-estimate");
 const routeStops = document.querySelector("#route-stops");
-const seatRequests = document.querySelector("#seat-requests");
-const inventoryStatus = document.querySelector("#inventory-status");
+const vehicleOptions = document.querySelector("#vehicle-options");
+const seatMap = document.querySelector("#seat-map");
+const seatSelectionStatus = document.querySelector("#seat-selection-status");
+const selectedSeatSummary = document.querySelector("#selected-seat-summary");
 
 const currency = new Intl.NumberFormat("en-KE", {
   style: "currency",
   currency: "KES",
   maximumFractionDigits: 0,
 });
-let availableDepartures = [];
-let selectedDeparture = null;
-let inventoryRequest = 0;
+let selectedVehicle = vehicleLayouts[0];
+let selectedSeats = [];
 
 function addLocationOptions(select) {
   const fragment = document.createDocumentFragment();
@@ -53,143 +56,15 @@ function resetSelect(select, label) {
   select.append(option);
 }
 
-function clearDepartures() {
-  availableDepartures = [];
-  selectedDeparture = null;
-  resetSelect(timeSelect, "Choose a departure time");
-  resetSelect(vehicleSelect, "Choose a departure first");
-  resetSelect(passengerSelect, "Choose a departure first");
-  updateSeatRequests();
-}
-
-async function refreshDepartures() {
-  const requestId = ++inventoryRequest;
-  clearDepartures();
-
-  if (!inventoryUrl) {
-    inventoryStatus.textContent = "Live seat inventory is not configured yet. Please contact us on WhatsApp to check availability.";
-    return;
-  }
-  if (!originSelect.value || !destinationSelect.value || !dateInput.value) {
-    inventoryStatus.textContent = "Choose a route and date to check live departures.";
-    return;
-  }
-  if (originSelect.value === destinationSelect.value) {
-    inventoryStatus.textContent = "Choose two different towns to check live departures.";
-    return;
-  }
-
-  inventoryStatus.textContent = "Checking live departures…";
-  try {
-    const data = await loadDepartures();
-    if (requestId !== inventoryRequest) return;
-    const now = new Date();
-    availableDepartures = data
-      .filter((departure) => (
-        departure.origin === originSelect.value
-        && departure.destination === destinationSelect.value
-        && departure.service_date === dateInput.value
-        && departure.available_seats.length > 0
-        && (departure.service_date !== localDateValue(now)
-          || departure.departure_time > `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`)
-      ))
-      .map((departure) => ({
-        ...departure,
-        availableSeats: departure.available_seats.sort((first, second) => first - second),
-      }))
-      .sort((first, second) => first.departure_time.localeCompare(second.departure_time));
-  } catch (error) {
-    if (requestId === inventoryRequest) {
-      inventoryStatus.textContent = `Could not load live seat availability: ${error.message}`;
-    }
-    return;
-  }
-
-  const departureTimes = [...new Set(availableDepartures.map((departure) => departure.departure_time.slice(0, 5)))];
-  departureTimes.forEach((time) => {
-    const departuresAtTime = availableDepartures.filter((departure) => departure.departure_time.startsWith(time));
+function populateDepartureTimes() {
+  resetSelect(timeSelect, "Choose preferred time");
+  for (let hour = 0; hour < 24; hour += 1) {
+    const time = `${String(hour).padStart(2, "0")}:00`;
     const option = document.createElement("option");
     option.value = time;
-    option.textContent = `${time} · ${departuresAtTime.reduce((count, trip) => count + trip.availableSeats.length, 0)} seats available`;
+    option.textContent = time;
     timeSelect.append(option);
-  });
-
-  inventoryStatus.textContent = availableDepartures.length
-    ? `${availableDepartures.length} live vehicle departure(s) found. Inventory refreshes every 20 seconds. Seats are reserved after staff confirmation.`
-    : "No live departures with available seats were found for this route and date. Contact us on WhatsApp.";
-}
-
-function loadDepartures() {
-  return new Promise((resolve, reject) => {
-    const callbackName = `mololineInventory_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    const script = document.createElement("script");
-    const cleanup = () => {
-      window.clearTimeout(timeout);
-      delete window[callbackName];
-      script.remove();
-    };
-    const timeout = window.setTimeout(() => {
-      cleanup();
-      reject(new Error("Inventory service did not respond. Please try again."));
-    }, 12000);
-
-    window[callbackName] = (response) => {
-      cleanup();
-      if (!response.ok) {
-        reject(new Error(response.error || "Inventory service returned an error."));
-        return;
-      }
-      resolve(response.departures);
-    };
-    script.onerror = () => {
-      cleanup();
-      reject(new Error("Could not connect to the inventory service."));
-    };
-
-    const url = new URL(inventoryUrl);
-    url.searchParams.set("action", "departures");
-    url.searchParams.set("callback", callbackName);
-    url.searchParams.set("_", Date.now().toString());
-    script.src = url.toString();
-    document.head.append(script);
-  });
-}
-
-function updateVehicleOptions() {
-  selectedDeparture = null;
-  resetSelect(vehicleSelect, "Choose a vehicle");
-  resetSelect(passengerSelect, "Choose a vehicle first");
-  seatRequests.replaceChildren();
-
-  const departuresAtTime = availableDepartures.filter(
-    (departure) => departure.departure_time.startsWith(timeSelect.value),
-  );
-  departuresAtTime.forEach((departure) => {
-    const option = document.createElement("option");
-    option.value = departure.id;
-    option.textContent = `${departure.vehicle_type} · ${departure.vehicle_label} · ${departure.availableSeats.length} seats available`;
-    vehicleSelect.append(option);
-  });
-}
-
-function updatePassengerOptions() {
-  const capacity = selectedDeparture?.availableSeats.length || 0;
-  const currentPassengers = Number(passengerSelect.value) || 1;
-  passengerSelect.replaceChildren();
-
-  if (!capacity) {
-    resetSelect(passengerSelect, "Choose a vehicle first");
-    return;
   }
-
-  for (let count = 1; count <= Math.min(capacity, maxPassengersPerRequest); count += 1) {
-    const option = document.createElement("option");
-    option.value = String(count);
-    option.textContent = `${count} ${count === 1 ? "passenger" : "passengers"}`;
-    passengerSelect.append(option);
-  }
-
-  passengerSelect.value = String(Math.min(currentPassengers, capacity));
 }
 
 function findLocation(town) {
@@ -205,8 +80,7 @@ function estimateFarePerPassenger(origin, destination) {
 }
 
 function estimateBaseFare(start, end) {
-  const straightLineKm = distanceKm(start, end);
-  const estimatedRoadKm = straightLineKm * 1.4;
+  const estimatedRoadKm = distanceKm(start, end) * 1.4;
   return Math.max(500, Math.round((250 + estimatedRoadKm * 4.5) / 100) * 100);
 }
 
@@ -305,77 +179,116 @@ function updateFareEstimate() {
   if (originSelect.value && originSelect.value === destinationSelect.value) {
     fareEstimate.textContent = "Choose a different destination";
     updateRouteStops(null);
+    updateSeatSummary(null);
     return;
   }
+
   fareEstimate.textContent = fare === null ? "Choose a route" : `${currency.format(fare)} per passenger`;
   updateRouteStops(fare);
+  updateSeatSummary(fare);
 }
 
-function updateSeatRequests() {
-  const passengers = Number(passengerSelect.value) || 1;
-  const previous = Array.from(seatRequests.querySelectorAll("select")).map((select) => select.value);
-  seatRequests.replaceChildren();
+function renderVehicleOptions() {
+  vehicleOptions.replaceChildren();
+  vehicleLayouts.forEach((vehicle) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "vehicle-option";
+    button.setAttribute("aria-pressed", String(vehicle.id === selectedVehicle.id));
+    button.textContent = vehicle.label;
+    button.addEventListener("click", () => {
+      selectedVehicle = vehicle;
+      selectedSeats = [];
+      renderVehicleOptions();
+      renderSeatMap();
+      updateSeatSummary(estimateFarePerPassenger(originSelect.value, destinationSelect.value));
+    });
+    vehicleOptions.append(button);
+  });
+}
 
-  if (!selectedDeparture) {
-    const note = document.createElement("p");
-    note.className = "booking-extra-note";
-    note.textContent = "Select a live departure and vehicle to see available seat numbers.";
-    seatRequests.append(note);
+function renderSeatMap() {
+  seatMap.replaceChildren();
+  seatMap.className = `seat-grid seat-grid-${selectedVehicle.id}`;
+  let seatNumber = 0;
+
+  selectedVehicle.seatsPerRow.forEach((seatCount, rowIndex) => {
+    for (let columnIndex = 0; columnIndex < seatCount; columnIndex += 1) {
+      seatNumber += 1;
+      const seat = `${rowIndex + 1}${String.fromCharCode(65 + columnIndex)}`;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "seat-button";
+      button.textContent = seat;
+      button.setAttribute("aria-label", `Seat ${seat}`);
+      button.setAttribute("aria-pressed", "false");
+      button.addEventListener("click", () => toggleSeat(seat, button));
+      seatMap.append(button);
+    }
+  });
+  seatMap.setAttribute("aria-label", `${selectedVehicle.label}, ${seatNumber} selectable seats`);
+  updateSeatSelectionStatus();
+}
+
+function toggleSeat(seat, button) {
+  if (selectedSeats.includes(seat)) {
+    selectedSeats = selectedSeats.filter((selected) => selected !== seat);
+    button.classList.remove("is-selected");
+    button.setAttribute("aria-pressed", "false");
+  } else if (selectedSeats.length < maxPassengersPerRequest) {
+    selectedSeats.push(seat);
+    button.classList.add("is-selected");
+    button.setAttribute("aria-pressed", "true");
+  } else {
+    seatSelectionStatus.textContent = `You can select up to ${maxPassengersPerRequest} seats per request.`;
     return;
   }
 
-  for (let passenger = 0; passenger < passengers; passenger += 1) {
-    const label = document.createElement("label");
-    const labelText = document.createElement("span");
-    const select = document.createElement("select");
-    labelText.textContent = `Passenger ${passenger + 1} seat`;
-    select.name = "seatNumber";
-    select.required = true;
-    select.setAttribute("aria-label", `Passenger ${passenger + 1} seat number`);
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = "Choose seat number";
-    select.append(placeholder);
-
-    selectedDeparture.availableSeats.forEach((seat) => {
-      const option = document.createElement("option");
-      option.value = String(seat);
-      option.textContent = `Seat ${seat}`;
-      select.append(option);
-    });
-
-    if (previous[passenger]) select.value = previous[passenger];
-    select.addEventListener("change", updateSeatAvailability);
-    label.append(labelText, select);
-    seatRequests.append(label);
-  }
-
-  updateSeatAvailability();
+  updateSeatSelectionStatus();
+  updateSeatSummary(estimateFarePerPassenger(originSelect.value, destinationSelect.value));
 }
 
-function updateSeatAvailability() {
-  const selects = Array.from(seatRequests.querySelectorAll("select"));
-  const chosenSeats = selects.map((select) => select.value).filter(Boolean);
+function updateSeatSelectionStatus() {
+  seatSelectionStatus.textContent = selectedSeats.length
+    ? `${selectedSeats.length} ${selectedSeats.length === 1 ? "seat" : "seats"} selected: ${selectedSeats.join(", ")}`
+    : "No seats selected";
+}
 
-  selects.forEach((select) => {
-    const selectedByOthers = new Set(chosenSeats.filter((seat) => seat !== select.value));
-    Array.from(select.options).forEach((option) => {
-      option.disabled = selectedByOthers.has(option.value);
-    });
-  });
+function updateSeatSummary(fare) {
+  if (!fare || !selectedSeats.length) {
+    selectedSeatSummary.textContent = selectedSeats.length
+      ? `Seats: ${selectedSeats.join(", ")}`
+      : "Seats: none selected";
+    return;
+  }
+  selectedSeatSummary.textContent = `Seats: ${selectedSeats.join(", ")} · ${currency.format(fare * selectedSeats.length)} estimated total`;
+}
+
+function applyRouteFromQuery() {
+  const requestedRoute = new URLSearchParams(window.location.search).get("route");
+  if (!requestedRoute) return;
+
+  const slugify = (value) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  for (const [origin] of locations) {
+    for (const [destination] of locations) {
+      if (`${slugify(origin)}-${slugify(destination)}` === requestedRoute) {
+        originSelect.value = origin;
+        destinationSelect.value = destination;
+        return;
+      }
+    }
+  }
 }
 
 addLocationOptions(originSelect);
 addLocationOptions(destinationSelect);
 dateInput.min = localDateValue(new Date());
 dateInput.value = dateInput.min;
-updateSeatRequests();
+populateDepartureTimes();
+applyRouteFromQuery();
+renderVehicleOptions();
+renderSeatMap();
 updateFareEstimate();
-refreshDepartures();
-
-window.setInterval(() => {
-  if (document.visibilityState === "visible") refreshDepartures();
-}, 20000);
 
 menuToggle.addEventListener("click", () => {
   const isExpanded = menuToggle.getAttribute("aria-expanded") === "true";
@@ -401,33 +314,14 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-dateInput.addEventListener("change", refreshDepartures);
-originSelect.addEventListener("change", () => {
-  updateFareEstimate();
-  refreshDepartures();
-});
-destinationSelect.addEventListener("change", () => {
-  updateFareEstimate();
-  refreshDepartures();
-});
-timeSelect.addEventListener("change", updateVehicleOptions);
-vehicleSelect.addEventListener("change", () => {
-  selectedDeparture = availableDepartures.find((departure) => departure.id === vehicleSelect.value) || null;
-  updatePassengerOptions();
-  updateSeatRequests();
-  updateFareEstimate();
-});
-passengerSelect.addEventListener("change", () => {
-  updateSeatRequests();
-  updateFareEstimate();
-});
+originSelect.addEventListener("change", updateFareEstimate);
+destinationSelect.addEventListener("change", updateFareEstimate);
 
 document.querySelector("#swap-route").addEventListener("click", () => {
   const origin = originSelect.value;
   originSelect.value = destinationSelect.value;
   destinationSelect.value = origin;
   updateFareEstimate();
-  refreshDepartures();
 });
 
 bookingForm.addEventListener("submit", (event) => {
@@ -440,102 +334,38 @@ bookingForm.addEventListener("submit", (event) => {
     destinationSelect.setCustomValidity("");
     return;
   }
-
-  if (!inventoryUrl || !selectedDeparture) {
-    inventoryStatus.textContent = "Choose a departure with live available seats before requesting a booking.";
+  if (!selectedSeats.length) {
+    seatSelectionStatus.textContent = "Choose at least one seat before continuing.";
+    seatMap.querySelector(".seat-button")?.focus();
     return;
   }
 
   const booking = new FormData(bookingForm);
   const fare = estimateFarePerPassenger(booking.get("origin"), booking.get("destination"));
-  const passengers = Number(booking.get("passengers"));
-  const seatNumbers = booking.getAll("seatNumber").map(Number);
   const legs = routeLegs(booking.get("origin"), booking.get("destination"), fare);
-  const departure = selectedDeparture;
-  const submitButton = bookingForm.querySelector(".booking-submit");
-  submitButton.disabled = true;
-  inventoryStatus.textContent = "Sending your seat request…";
+  const lines = [
+    "Hello Mololine, I would like to request a countrywide booking.",
+    `From: ${booking.get("origin")}`,
+    `To: ${booking.get("destination")}`,
+    `Date: ${booking.get("date")}`,
+    `Preferred departure time: ${booking.get("time")}`,
+    `Vehicle: ${selectedVehicle.label}`,
+    `Passengers: ${selectedSeats.length}`,
+    `Requested seat(s): ${selectedSeats.join(", ")}`,
+    `Suggested route stops and leg fares: ${legs
+      .map((leg) => `${leg.from} to ${leg.to}: ${currency.format(leg.fare)} per passenger`)
+      .join("; ")}`,
+    `Estimated fare: ${currency.format(fare)} per passenger (${currency.format(fare * selectedSeats.length)} total; to be confirmed)`,
+    `Name: ${booking.get("name").toString().trim()}`,
+    `Phone: ${booking.get("phone").toString().trim()}`,
+    "These seat choices are requests only, not live availability or reservations. Please confirm the seats, departure and fare on WhatsApp. No online payment has been made.",
+  ];
 
-  const request = {
-    departure_id: departure.id,
-    name: booking.get("name").toString().trim(),
-    phone: booking.get("phone").toString().trim(),
-    seat_numbers: seatNumbers,
-    fare_per_passenger: fare,
-    suggested_stops: legs.map((leg) => ({
-      from: leg.from,
-      to: leg.to,
-      fare: leg.fare,
-    })),
-  };
-  const frame = document.createElement("iframe");
-  const form = document.createElement("form");
-  const postComplete = (messageEvent) => {
-    if (messageEvent.source !== frame.contentWindow) return;
-    if (!["script.google.com", "script.googleusercontent.com"].includes(new URL(messageEvent.origin).hostname)) return;
-    window.removeEventListener("message", postComplete);
-    window.clearTimeout(postTimeout);
-    frame.remove();
-    form.remove();
-    submitButton.disabled = false;
-    if (!messageEvent.data || messageEvent.data.source !== "mololine-inventory") return;
-    if (!messageEvent.data.ok) {
-      inventoryStatus.textContent = `Could not submit request: ${messageEvent.data.error}. Refresh availability and try again.`;
-      refreshDepartures();
-      return;
-    }
-
-    const lines = [
-      "Hello Mololine, I have submitted a countrywide booking request.",
-      `Request reference: ${messageEvent.data.request_id}`,
-      `From: ${booking.get("origin")}`,
-      `To: ${booking.get("destination")}`,
-      `Date: ${booking.get("date")}`,
-      `Departure time: ${departure.departure_time}`,
-      `Vehicle: ${departure.vehicle_type} · ${departure.vehicle_label}`,
-      `Passengers: ${passengers}`,
-      `Requested seat number(s): ${seatNumbers.join(", ")}`,
-      `Suggested route stops and leg fares: ${legs
-        .map((leg) => `${leg.from} to ${leg.to}: ${currency.format(leg.fare)} per passenger`)
-        .join("; ")}`,
-      `Estimated fare after KES 200 discount: ${currency.format(fare)} per passenger (${currency.format(fare * passengers)} total; to be confirmed)`,
-      `Name: ${request.name}`,
-      `Phone: ${request.phone}`,
-      "This is a request only; please confirm the fare and final booking on WhatsApp. No online payment has been made.",
-    ];
-
-    window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
-  };
-  const postTimeout = window.setTimeout(() => {
-    window.removeEventListener("message", postComplete);
-    frame.remove();
-    form.remove();
-    submitButton.disabled = false;
-    inventoryStatus.textContent = "The inventory service did not confirm that your request was received. Please contact us on WhatsApp.";
-  }, 20000);
-
-  window.addEventListener("message", postComplete);
-  frame.name = `mololine-request-${Date.now()}`;
-  frame.hidden = true;
-  frame.src = "about:blank";
-  form.hidden = true;
-  form.method = "post";
-  form.target = frame.name;
-  form.action = inventoryUrl;
-  const actionField = document.createElement("input");
-  actionField.name = "action";
-  actionField.value = "request";
-  const requestField = document.createElement("input");
-  requestField.name = "request_json";
-  requestField.value = JSON.stringify(request);
-  form.append(actionField, requestField);
-  document.body.append(frame, form);
-  window.setTimeout(() => form.submit(), 0);
+  window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
 });
 
 contactForm.addEventListener("submit", (event) => {
   event.preventDefault();
-
   if (!contactForm.reportValidity()) return;
 
   const formData = new FormData(contactForm);
